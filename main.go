@@ -1,7 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 
 	"github.com/fdefabricio/crawler-novelas/crawler"
@@ -35,4 +37,14 @@ func main() {
 	novelas := crawler.Run(listOfListOfNovelas)
 
 	fmt.Printf("%d novelas scrapped\n", len(novelas))
+
+	novelasJSON, err := json.Marshal(novelas)
+	if err != nil {
+		log.Error(err)
+	}
+
+	err = ioutil.WriteFile("novelas.json", novelasJSON, 0644)
+	if err != nil {
+		log.Error(err)
+	}
 }
