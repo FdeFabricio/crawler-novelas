@@ -21,7 +21,7 @@ func init() {
 	infoC = colly.NewCollector(
 		colly.AllowedDomains("pt.wikipedia.org"),
 		colly.CacheDir("./crawlercache"),
-		colly.Async(true),
+		//colly.Async(true),
 	)
 
 	actorsC = infoC.Clone()
@@ -29,6 +29,7 @@ func init() {
 
 func Run(urls []string) (novelas map[string]*model.Novela) {
 	novelas = make(map[string]*model.Novela)
+	warningCount := 0
 
 	// On every <a> element in a cell representing the title of a novela, fill in the info and call the actors collector
 	infoC.OnHTML("table:has(tr th:contains('Título'))", func(e *colly.HTMLElement) {
@@ -85,6 +86,7 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 		for _, err := range errs {
 			if err != nil {
 				log.Warnf("%s: %s", name, err)
+				warningCount += 1
 			}
 		}
 	})
@@ -104,8 +106,10 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 		}
 	}
 
-	infoC.Wait()
-	actorsC.Wait()
+	//infoC.Wait()
+	//actorsC.Wait()
+
+	fmt.Printf("%d validation warnings found\n", warningCount)
 
 	return
 }

@@ -1,14 +1,25 @@
 package main
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/fdefabricio/crawler-novelas/crawler"
 	log "github.com/sirupsen/logrus"
 )
 
 func init() {
-	log.SetLevel(log.ErrorLevel)
-	log.SetLevel(log.WarnLevel)
-	log.SetLevel(log.InfoLevel)
+	switch os.Getenv("ENV") {
+	case "VALIDATION":
+		log.SetLevel(log.WarnLevel)
+		f, err := os.Create("validation.log")
+		if err != nil {
+			log.Fatal("Couldn't create/open validation log file")
+		}
+		log.SetOutput(f)
+	default:
+		log.SetLevel(log.ErrorLevel)
+	}
 }
 
 func main() {
@@ -23,5 +34,5 @@ func main() {
 
 	novelas := crawler.Run(listOfListOfNovelas)
 
-	log.Infof("%d novelas scrapped", len(novelas))
+	fmt.Printf("%d novelas scrapped\n", len(novelas))
 }
