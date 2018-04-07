@@ -7,6 +7,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/fdefabricio/crawler-novelas/model"
+	"github.com/fdefabricio/crawler-novelas/validator"
 	"github.com/gocolly/colly"
 	log "github.com/sirupsen/logrus"
 )
@@ -79,6 +80,13 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 		mutex.Lock()
 		novelas[strings.ToLower(name)].AppendActors(actors)
 		mutex.Unlock()
+
+		errs := validator.Check(*novelas[strings.ToLower(name)])
+		for _, err := range errs {
+			if err != nil {
+				log.Warnf("%s: %s", name, err)
+			}
+		}
 	})
 
 	infoC.OnRequest(func(r *colly.Request) {
