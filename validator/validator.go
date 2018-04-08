@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/fdefabricio/crawler-novelas/model"
+	"github.com/fdefabricio/crawler-novelas/utils"
 )
 
 func Check(n model.Novela) (es []error) {
@@ -36,6 +37,10 @@ func authors(as []string) []error {
 func chapters(s string) error {
 	if err := empty(s, "chapters"); err != nil {
 		return err
+	}
+
+	if s == "—" {
+		return nil
 	}
 
 	n, err := integer(s, "chapters")
@@ -107,7 +112,7 @@ func year(s string) error {
 func duplicate(slice []string, fieldName string) []error {
 	es := make([]error, 0)
 	for i, s := range slice {
-		if isIn(slice[i+1:], s) {
+		if utils.IsIn(slice[i+1:], s) {
 			es = append(es, errors.New(fmt.Sprintf("%s duplicate entry: %s", fieldName, s)))
 		}
 	}
@@ -132,15 +137,6 @@ func integer(s string, fieldName string) (int, error) {
 	return i, nil
 }
 
-func isIn(slice []string, b string) bool {
-	for _, a := range slice {
-		if a == b {
-			return true
-		}
-	}
-	return false
-}
-
 func slice(as []string, fieldName string) []error {
 	if err := unfilled(as, fieldName); err != nil {
 		return []error{err}
@@ -149,7 +145,7 @@ func slice(as []string, fieldName string) []error {
 	es := make([]error, 0)
 
 	for _, a := range as {
-		if err := empty(a, fieldName); err != nil {
+		if err := empty(a, fieldName+" name"); err != nil {
 			es = append(es, err)
 		}
 	}
