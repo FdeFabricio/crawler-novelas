@@ -36,11 +36,16 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 	infoC.OnHTML("table:has(tr th:contains('Título'))", func(e *colly.HTMLElement) {
 		e.ForEach("tr:has(td i a)", func(i int, e *colly.HTMLElement) {
 			name := e.ChildText("td:nth-child(4) i a")
+			// hardcoded because error on Wikipedia's entry
+			if name == "Em Fam%C3%ADlia" {
+				name = "Em Família"
+			}
+
 			url := e.Request.AbsoluteURL(e.ChildAttr("td:nth-child(4) i a", "href"))
 			info := model.BasicInfo{
-				Authors:   strings.Split(e.ChildText("td:nth-child(6)"), "\n"),
-				Chapters:  utils.TrimSuffix(e.ChildText("td:nth-child(5)")),
-				Directors: strings.Split(e.ChildText("td:nth-child(7)"), "\n"),
+				Authors:   strings.Split(utils.PruneName(e.ChildText("td:nth-child(6)")), "\n"),
+				Chapters:  utils.PruneName(e.ChildText("td:nth-child(5)")),
+				Directors: strings.Split(utils.PruneName(e.ChildText("td:nth-child(7)")), "\n"),
 				Hour:      strings.Split(fmt.Sprintf("%s", e.Request.URL), "#")[1],
 				Name:      name,
 				Year:      e.ChildText("td:nth-child(2)")[len(e.ChildText("td:nth-child(2)"))-4:],
@@ -64,6 +69,11 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 			name = utils.ExtractNameElencoDeURL(e.Request.URL.String())
 		}
 
+		// hardcoded because error on Wikipedia's entry
+		if name == "Em Fam%C3%ADlia" {
+			name = "Em Família"
+		}
+
 		if len(name) == 0 {
 			log.Errorf("name not found: %s", e.Request.URL.String())
 			return
@@ -79,8 +89,9 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 			e.DOM.NextFilteredUntil("table", "h2").Each(func(i int, s *goquery.Selection) {
 				s.Find("table:not(:has(table)):has(th:contains('Ator')) tbody").Each(func(j int, s *goquery.Selection) {
 					s.Find("tr td:first-child").Each(func(i int, s *goquery.Selection) {
-						if !utils.IsIn(actors, s.Text()) {
-							actors = append(actors, s.Text())
+						actorName := utils.PruneName(s.Text())
+						if !utils.IsIn(actors, actorName) && len(actorName) > 0 {
+							actors = append(actors, actorName)
 						}
 					})
 				})
@@ -89,8 +100,8 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 			if len(actors) == 0 {
 				e.DOM.NextFilteredUntil("ul,div", "h2").Each(func(i int, s *goquery.Selection) {
 					s.Find("li").Each(func(j int, s *goquery.Selection) {
-						actorName := strings.TrimSpace(strings.Split(s.Text(), "-")[0])
-						if !utils.IsIn(actors, actorName) {
+						actorName := utils.PruneName(strings.Split(s.Text(), "-")[0])
+						if !utils.IsIn(actors, actorName) && len(actorName) > 0 {
 							actors = append(actors, actorName)
 						}
 					})
@@ -101,7 +112,7 @@ func Run(urls []string) (novelas map[string]*model.Novela) {
 				elencoDeURL := strings.Replace(e.Request.AbsoluteURL(""), "/wiki/", "/wiki/Elenco_de_", 1)
 				e.Request.Visit(utils.ConvertSpecialCaracteres(elencoDeURL))
 				if strings.Contains(e.Request.URL.String(), "_(") {
-					e.Request.Visit(utils.ConvertSpecialCaracteres(utils.TrimSuffix(elencoDeURL)))
+					e.Request.Visit(utils.ConvertSpecialCaracteres(utils.PruneName(elencoDeURL)))
 				}
 				return
 			}

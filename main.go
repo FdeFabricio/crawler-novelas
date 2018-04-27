@@ -19,6 +19,8 @@ func init() {
 			log.Fatal("Couldn't create/open validation log file")
 		}
 		log.SetOutput(f)
+	case "DEBUG":
+		log.SetLevel(log.WarnLevel)
 	default:
 		log.SetLevel(log.ErrorLevel)
 	}

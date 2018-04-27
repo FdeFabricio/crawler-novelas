@@ -3,6 +3,7 @@ package validator
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -144,9 +145,14 @@ func slice(as []string, fieldName string) []error {
 
 	es := make([]error, 0)
 
-	for _, a := range as {
-		if err := empty(a, fieldName+" name"); err != nil {
+	for _, s := range as {
+		if err := empty(s, fieldName+" name"); err != nil {
 			es = append(es, err)
+		}
+
+		ok, _ := regexp.MatchString(`[^A-Za-zÀ-ÿ&'.\- ]|(\.\.)`, s)
+		if ok {
+			es = append(es, errors.New(s+" name has invalid characters"))
 		}
 	}
 
